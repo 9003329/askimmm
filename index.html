@@ -1,0 +1,481 @@
+
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mobil Galeri (Dokun → Açıklama)</title>
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --card: #121727;
+      --muted: #98a2b3;
+      --text: #e6eaf2;
+      --ring: rgba(255,255,255,.12);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, #1b2550 0%, transparent 60%),
+                  radial-gradient(1200px 800px at 80% 10%, #3a1b50 0%, transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+    }
+    header{
+      padding: 18px 16px 10px;
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(10px);
+      background: rgba(11,13,18,.55);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+
+      z-index: 10;
+    }
+    header h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    header p{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    main{
+      padding: 14px 16px 22px;
+      width: min(720px, 100%);
+      margin: 0 auto;
+      flex:1;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .flip{
+      perspective: 1100px;
+    }
+
+    .card{
+      width: 100%;
+      aspect-ratio: 4 / 5; /* mobil için güzel oran */
+      border-radius: var(--radius);
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .65s cubic-bezier(.2,.8,.2,1);
+      box-shadow: 0 18px 45px rgba(0,0,0,.45);
+
+      outline: 1px solid rgba(255,255,255,.06);
+      background: transparent;
+    }
+
+    .flip.is-flipped .card{ transform: rotateY(180deg); }
+
+    .side{
+      position:absolute; inset:0;
+      border-radius: var(--radius);
+      overflow:hidden;
+      backface-visibility: hidden;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+    }
+
+    .front{
+      background: #0c1020;
+    }
+
+    .front img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+      filter: saturate(1.05) contrast(1.02);
+    }
+
+    .front .label{
+      position:absolute;
+      left:12px; right:12px; bottom:12px;
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .dot{
+
+      width:10px; height:10px; border-radius:999px;
+      background: rgba(255,255,255,.7);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.08);
+      flex: 0 0 auto;
+    }
+    .title{
+      font-weight: 650;
+      font-size: 14px;
+      margin:0;
+      line-height:1.2;
+    }
+    .hint{
+      margin:2px 0 0;
+      font-size:12px;
+      color: rgba(255,255,255,.75);
+    }
+
+    .back{
+      transform: rotateY(180deg);
+
+      background:
+        radial-gradient(900px 600px at 20% 20%, rgba(112,56,255,.22) 0%, transparent 60%),
+        radial-gradient(900px 600px at 80% 10%, rgba(255,56,180,.18) 0%, transparent 60%),
+        var(--card);
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .back .meta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      margin-bottom: 12px;
+
+    }
+    .back .meta strong{
+      font-size: 14px;
+      letter-spacing:.2px;
+    }
+    .pill{
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      user-select:none;
+    }
+
+    .desc{
+      color: rgba(230,234,242,.92);
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 12px;
+      white-space: pre-wrap;
+
+    }
+
+    .actions{
+      margin-top:auto;
+      display:flex;
+      gap:10px;
+    }
+    button{
+      appearance:none;
+      border:none;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight: 650;
+      font-size: 13px;
+      color: var(--text);
+      background: rgba(255,255,255,.10);
+      outline: 1px solid rgba(255,255,255,.12);
+      width: 100%;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: rgba(120, 92, 255, .28);
+      outline: 1px solid rgba(120,92,255,.35);
+    }
+
+    /* küçük telefonlar */
+    @media (max-width: 360px){
+      .card{ aspect-ratio: 3 / 4; }
+      header h1{ font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📸 Mobil Galeri</h1>
+    <p>(toggle) Resme dokun: açıklama arkada görünsün. Tekrar dokun: geri dönsün.</p>
+  </header>
+
+
+  <main>
+    <section class="grid" id="gallery"></section>
+  </main>
+
+  <script>
+    // 1) Burayı kendi resim ve açıklamalarınla doldur.
+    // img: aynı klasördeki dosya adı veya URL olabilir.
+    const items = [
+      {
+        title: "Görsel 1",
+        img: "images/1.jpg",
+        tag: "Film Etkinliği",
+        desc: "Hayatım ile görüntülü konuşmak ve film etkinliği, bayılıyorum gülüşüne 🫠​..."
+      },
+      {
+        title: "Görsel 2",
+
+        img: "images/2.jpg",
+        tag: "Yolculuk",
+        desc: "Aylardan mayıs.\nSeninle tramwaydan bir kare, yorulduk ancak seninle olmak çok güzel❤️​❤️​."
+      },
+      {
+        title: "Görsel 3",
+        img: "images/3.jpg",
+        tag: "Hayvanat Bahçesi",
+        desc: "Bembayaz bir kuğu gibisin. Ogün hezamanki gibi çok güzeldi, ikimiz beyazlara büründük 🫠❤️​🫠"
+      },
+      {
+        title: "Görsel 4",
+        img: "images/4.jpg",
+        tag: "Remzi Ustaa",
+        desc: "Hayatım mezun mu oluyor? ❤️​"
+      }
+      ,
+      {
+        title: "Görsel 5",
+        img: "images/5.jpg",
+        tag: "Mezun bir hekim",
+        desc: "Çiçeği ile yeni mezun bir diş hekimi ❤️​,bayılıyorum sana 🫠"
+      },
+      {
+        title: "Görsel 6",
+        img: "images/6.jpg",
+        tag: "Mezun bir hekim",
+        desc: "Fakülte önünde sıcakancak perim yanımda, güzel bir fotoğraf ve bu ilk instagram paylaşımımız olan fotoğraf. ❤️​ 🫠"
+      },
+      {
+        title: "Görsel 7",
+        img: "images/7.jpg",
+        tag: "Mezun bir hekim",
+        desc: "Bir tanede mezuniyet hatırası. ❤️🫠"
+      },
+      {
+        title: "Görsel 8",
+        img: "images/8.jpg",
+        tag: "Mezun bir hekim",
+        desc: "Maşallah kadınıma, seninle gurur duyuyorum🫠❤️🫠"
+      },
+      {
+        title: "Görsel 9",
+        img: "images/9.jpg",
+        tag: "Aksiyon",
+        desc: "Çok güzel bir etkinlik ve çok güzel bir ikili, gülüşün mükemmel canımın içi🫠❤️🫠"
+      },
+      {
+        title: "Görsel 10",
+        img: "images/10.jpg",
+        tag: "Aksiyon",
+        desc: "Maşallah bize, korku dolu anların hemen öncesi, çok güzelizzz🫠❤️🫠"
+      },
+      {
+        title: "Görsel 11",
+        img: "images/11.jpg",
+        tag: "Aksiyon",
+        desc: "Seni çoook seviyorumm, etkilendiğim gondol sonrası beni sakinleştirmen, yanımda olman ve güzel bir kare çekmemiz. Bayılıyorum diyorummm🫠❤️🫠"
+      },
+      {
+        title: "Görsel 12",
+        img: "images/12.jpg",
+        tag: "Aksiyon",
+        desc: "Çok tatlıyız maşallah, mükemmel bir gülüş maşallah maşallah🫠💖🫠"
+      },
+      {
+        title: "Görsel 13",
+        img: "images/13.jpg",
+        tag: "Aksiyon",
+        desc: "Terlik bakmaca, ama bir boy aynası varsa tabiki beraber bir fotoğraf olmalı🫠💖🫠"
+      },
+      {
+        title: "Görsel 14",
+        img: "images/14.jpg",
+        tag: "Ayıcık",
+        desc: "Canımın hediyesi ulaşmış, çook mu tatlııı🐻💖🐻"
+      },
+      {
+        title: "Görsel 15",
+        img: "images/15.jpg",
+        tag: "Ayıcık",
+        desc: "Çok tatlı bir an, çay tatsız ama o kadar şeker bir sevgilim varki herşey çook tatlıııı💖🫠🫠"
+      },
+      {
+        title: "Görsel 16",
+        img: "images/16.jpg",
+        tag: "Boydan Foto",
+        desc: "Yine bir boydan ayna ve yine bizzzzz💖🫠🫠"
+      },
+      {
+        title: "Görsel 16",
+        img: "images/16.jpg",
+        tag: "Yeğen",
+        desc: "Yeğenim yengesine mi gitmiş, onu çooook sevmişşşş💖🫠🫠"
+      },
+      {
+        title: "Görsel 16",
+        img: "images/16.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Seni Çoooooook Seviyorum Hayatım, İyiki Sen💖🫠🫠"
+      },
+      {
+        title: "Görsel 16",
+        img: "images/16.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Seni Çoooooook Seviyorum Hayatım, İyiki Sen💖🫠🫠"
+      },
+      {
+        title: "Görsel 19",
+        img: "images/19.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Çok güzel bir kare💖🫠🫠"
+      },
+      {
+        title: "Görsel 20",
+        img: "images/20.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Yeni mekanımızi, yeni içeceklerimiz💖🫠🫠"
+      },
+      {
+        title: "Görsel 21",
+        img: "images/21.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Güzel bir günün güzel bir menüsümü, artık favorilerden birisi💖🫠🫠"
+      },
+      {
+        title: "Görsel 22",
+        img: "images/22.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Maşallah bizeee💖🫠🫠"
+      },
+      {
+        title: "Görsel 23",
+        img: "images/23.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Yine bana bayılıyorsunnn💖🫠🫠"
+      },
+      {
+        title: "Görsel 24",
+        img: "images/24.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Seni çooookkk seniyorum kartanemmmmm💖🫠🫠"
+      },
+      {
+        title: "Görsel 25",
+        img: "images/25.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Senin hastanım, Sana Hastayımmm💖🫠🫠"
+      },
+      {
+        title: "Görsel 26",
+        img: "images/26.jpg",
+        tag: "Seni Çok Seviyorum",
+        desc: "Bu daaa güzelll birrr kare, fotoğraf kötü çekilmiş ama güzelll bir an💖🫠🫠"
+      }
+
+
+
+    ];
+
+    const gallery = document.getElementById("gallery");
+
+    function makeCard(item, index){
+      const wrap = document.createElement("article");
+      wrap.className = "flip";
+
+      wrap.setAttribute("role", "button");
+      wrap.setAttribute("tabindex", "0");
+      wrap.setAttribute("aria-label", item.title + " kartı");
+
+      wrap.innerHTML = `
+        <div class="card">
+          <div class="side front">
+            <img src="${item.img}" alt="${escapeHtml(item.title)}" loading="lazy">
+            <div class="label">
+              <span class="dot" aria-hidden="true"></span>
+              <div>
+                <p class="title">${escapeHtml(item.title)}</p>
+                <p class="hint">Dokun → açıklama</p>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="side back">
+            <div class="meta">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span class="pill">${escapeHtml(item.tag ?? "Açıklama")}</span>
+            </div>
+            <p class="desc">${escapeHtml(item.desc ?? "")}</p>
+            <div class="actions">
+              <button class="primary" type="button" data-action="close">Geri dön</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Dokununca flip
+
+      const toggle = () => wrap.classList.toggle("is-flipped");
+
+      wrap.addEventListener("click", (e) => {
+        // butona basıldıysa sadece kapat
+        const btn = e.target.closest("button[data-action]");
+        if (btn?.dataset.action === "close") {
+          wrap.classList.remove("is-flipped");
+          e.stopPropagation();
+          return;
+        }
+        toggle();
+      });
+
+      // klavye erişilebilirliği (Enter/Space)
+      wrap.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle();
+
+        }
+        if (e.key === "Escape") {
+          wrap.classList.remove("is-flipped");
+        }
+      });
+
+      return wrap;
+    }
+
+    // XSS basit kaçış
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // Render
+    items.forEach((it, i) => 
+
+gallery.appendChild(makeCard(it, i)));
+  </script>
+</body>
+</html>
